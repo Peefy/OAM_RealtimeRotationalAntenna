@@ -3,12 +3,12 @@ function [ch0, ch1, ch2, ch3] = card_read_data(cardInfo, mRegs, mErrors, fs)
 
 % ----- we'll start and wait until the card has finished or until a timeout occurs -----
 timeout_ms = 5000;
-sampleRate = 625e6;
+sampleRate = 1250e6;
 if nargin == 4
     sampleRate = fs;
 end
 cardInfo.setSamplerate = sampleRate;
-fprintf ('\n Sampling rate set to %.1f MHz', cardInfo.setSamplerate / 1000000);
+% fprintf ('\n Sampling rate set to %.1f MHz', cardInfo.setSamplerate / 1000000);
 errorCode = spcm_dwSetParam_i32 (cardInfo.hDrv, mRegs('SPC_SAMPLERATE'), sampleRate);
 if (errorCode ~= 0)
     [~, cardInfo] = spcMCheckSetError (errorCode, cardInfo);
@@ -22,8 +22,8 @@ if (errorCode ~= 0)
     return;
 end
 
-fprintf ('\n Card timeout is set to %d ms\n', timeout_ms);
-fprintf (' Starting the card and waiting for ready interrupt ...\n');
+% fprintf ('\n Card timeout is set to %d ms\n', timeout_ms);
+% fprintf (' Starting the card and waiting for ready interrupt ...\n');
 
 % ----- set command flags -----
 commandMask = bitor (mRegs('M2CMD_CARD_START'), mRegs('M2CMD_CARD_ENABLETRIGGER'));
@@ -41,7 +41,7 @@ if errorCode == mErrors('ERR_TIMEOUT')
    return;
 else
     % ***** transfer data from card to PC memory *****
-    fprintf (' Starting the DMA transfer and waiting until data is in PC memory ...\n');
+    % fprintf (' Starting the DMA transfer and waiting until data is in PC memory ...\n');
     
     % ***** get analog input data *****
     if cardInfo.cardFunction == mRegs ('SPCM_TYPE_AI')

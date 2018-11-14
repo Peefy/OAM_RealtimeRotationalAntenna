@@ -26,6 +26,8 @@ global isopen
 global isrenew
 global card
 global datashownum
+global checkright
+global refreshMode
 
 regs = spcMCreateRegMap();
 errors = spcMCreateErrorMap();
@@ -33,8 +35,10 @@ isopen = 0;
 isrenew = 0;
 card = 0;
 datashownum = 5000;
+refreshMode = 0;
 
-ImPeriod = 5000;  %5000ms
+ImPeriod = 0.5;  %500ms
+checkright = 0;
 
 handles.output = hObject;
 guidata(hObject, handles);
@@ -54,6 +58,10 @@ global figureRecDataCh0
 global figureRecDataCh1
 global figureRecDataCh2
 global figureRecDataCh3
+global figureImageShow
+global refreshMode
+global checkright
+global datashownum
 global channel0Data
 global channel1Data
 global channel2Data
@@ -68,6 +76,20 @@ channel1Data = Dat_Ch1;
 channel2Data = Dat_Ch2;
 channel3Data = Dat_Ch3;
 
+
+%set(figureRecDataCh1, 'XData', time(1:datashownum), 'YData', Dat_Ch1(1:datashownum));
+%set(figureRecDataCh2, 'XData', time(1:datashownum), 'YData', Dat_Ch2(1:datashownum));
+%set(figureRecDataCh3, 'XData', time(1:datashownum), 'YData', Dat_Ch3(1:datashownum));
+
+checkright = checkright + 1;
+if refreshMode == 0
+    set(figureRecDataCh0, 'XData', time(1:datashownum), 'YData', Dat_Ch0(1:datashownum));
+    [~,~,RShow,ImageShow] = xpf_fun_gui_1DImage(handles,Dat_Ch0, Dat_Ch2);
+    set(figureImageShow, 'XData', RShow, 'YData', ImageShow);
+    fprintf('check right count : %d\n', checkright);
+else
+    WriteToFile(Dat_Ch0, Dat_Ch1, Dat_Ch2, Dat_Ch3, 'oam_ann', num2str(checkright));
+end
 
 %% Gui close func
 function DeleteFcn(hObject, eventdata, t, handles)
@@ -114,6 +136,7 @@ global figureRecDataCh0
 global figureRecDataCh1
 global figureRecDataCh2
 global figureRecDataCh3
+global figureImageShow
 global card
 global regs
 global errors
@@ -130,12 +153,18 @@ time = 0 : sampleTime : (ndatanum - 1) * sampleTime;
 fontsize = 18;
 figureRecDataCh0 = plot(time(1:datashownum), Dat_Ch0(1:datashownum), 'b');
 hold on;
-figureRecDataCh1 = plot(time(1:datashownum), Dat_Ch1(1:datashownum), 'g');
-figureRecDataCh2 = plot(time(1:datashownum), Dat_Ch2(1:datashownum), 'r');
-figureRecDataCh3 = plot(time(1:datashownum), Dat_Ch3(1:datashownum), 'y');
-hold off;
-legend('Channel0', 'Channel1', 'Channel2','Channel3');
+%figureRecDataCh1 = plot(time(1:datashownum), Dat_Ch1(1:datashownum), 'g');
+%figureRecDataCh2 = plot(time(1:datashownum), Dat_Ch2(1:datashownum), 'r');
+%figureRecDataCh3 = plot(time(1:datashownum), Dat_Ch3(1:datashownum), 'y');
+%hold off;
+%legend('Channel0', 'Channel1', 'Channel2','Channel3');
 set(gca, 'FontSize', fontsize);
+
+[~,~,RShow,ImageShow] = xpf_fun_gui_1DImage(handles,Dat_Ch0, Dat_Ch2);
+axes(handles.axes_image)
+figureImageShow = plot(RShow,ImageShow);
+xlim([0,30])
+
 isrenew = 1;
 start(t);
 
@@ -154,14 +183,21 @@ guidata(hObject, handles);
 delete(handles.figure1)
 
 function checkbox1_Callback(hObject, eventdata, handles)
-
+global refreshMode
+global t
 checked = get(hObject,'Value');
 if checked
     set(handles.togglebutton_rotate,'Enable','on');
     set(handles.togglebutton_pulse,'Enable','on');
+    refreshMode = 1;
+    ImPeriod = 0.01;  %500ms
+    set(t,'Period', ImPeriod);
 else
     set(handles.togglebutton_rotate,'Enable','off');
     set(handles.togglebutton_pulse,'Enable','off');
+    refreshMode = 0;
+    ImPeriod = 0.5;  %500ms
+    set(t,'Period', ImPeriod);
 end 
 
 % --- Executes on button press in edit1.
